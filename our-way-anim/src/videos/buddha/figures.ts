@@ -151,6 +151,90 @@ export const drawSage = (g: G, o: SageOpts = {}) => {
   g.beginPath(); g.ellipse(420, 402, 20, 13, -0.6, 0, Math.PI * 2); fillInk(g, skin, 5);
 };
 
+/** Queen Maya's arm reaching up to hold a flowering sal branch (close-up card, branch painted in). */
+export const drawHandBranch = (g: G) => {
+  // branch from the top left to the right, with leaves and blossoms
+  line(g, [[0, 250], [180, 230], [330, 260], [600, 210]], "#5a3b26", 22);
+  line(g, [[0, 250], [180, 230], [330, 260], [600, 210]], INK, 4);
+  line(g, [[330, 260], [420, 150], [470, 60]], "#5a3b26", 12);
+  const leaf = (x: number, y: number, r: number, s = 1) => {
+    g.save(); g.translate(x, y); g.rotate(r);
+    g.beginPath(); g.ellipse(0, 0, 46 * s, 17 * s, 0, 0, Math.PI * 2); fillInk(g, "#5f8f42", 4);
+    line(g, [[-38 * s, 0], [38 * s, 0]], "#3e6a2c", 3); g.restore();
+  };
+  const bloom = (x: number, y: number) => {
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; g.beginPath(); g.ellipse(x + Math.cos(a) * 12, y + Math.sin(a) * 12, 11, 7, a, 0, Math.PI * 2); fillInk(g, "#f7ead2", 3); }
+    g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fillStyle = "#e3b23c"; g.fill();
+  };
+  leaf(90, 200, -0.4); leaf(130, 280, 0.5); leaf(250, 210, -0.2); leaf(270, 300, 0.7); leaf(420, 190, -0.9); leaf(470, 260, 0.3); leaf(560, 170, -0.3); leaf(440, 100, -1.2, 0.8);
+  bloom(60, 240); bloom(205, 205); bloom(360, 230); bloom(500, 215); bloom(455, 70); bloom(560, 240); bloom(300, 300);
+  // arm in a red silk sleeve with a gold border, rising from the bottom
+  g.beginPath();
+  g.moveTo(170, 1000); g.quadraticCurveTo(200, 700, 300, 420); g.lineTo(360, 440); g.quadraticCurveTo(300, 700, 300, 1000); g.closePath();
+  fillInk(g, "#b8323a");
+  line(g, [[300, 430], [262, 560], [236, 700]], "#e3b23c", 10);
+  // forearm and hand
+  g.beginPath();
+  g.moveTo(300, 422); g.quadraticCurveTo(322, 330, 340, 290); g.lineTo(372, 296); g.quadraticCurveTo(362, 360, 358, 440); g.closePath();
+  fillInk(g, "#c98d62");
+  for (const y of [400, 418]) line(g, [[302, y], [358, y + 6]], "#e3b23c", 8);
+  // fingers curled around the branch
+  g.beginPath(); g.moveTo(336, 296); g.quadraticCurveTo(326, 250, 352, 238); g.quadraticCurveTo(388, 236, 392, 262); g.quadraticCurveTo(388, 292, 372, 298); g.closePath();
+  fillInk(g, "#c98d62", 6);
+  line(g, [[348, 252], [384, 258]], "#93603f", 3);
+};
+
+/** An elder of the Shakya council seen from behind: turban, shawl, long robe. */
+export const drawElderBack = (g: G, robe: string, turban: string) => {
+  g.beginPath(); g.moveTo(230, 300); g.quadraticCurveTo(190, 600, 200, 962); g.lineTo(400, 962); g.quadraticCurveTo(410, 600, 370, 300); g.quadraticCurveTo(300, 280, 230, 300); g.closePath();
+  fillInk(g, robe);
+  g.save(); g.clip(); g.fillStyle = "rgba(60,30,40,0.25)"; g.fillRect(320, 280, 120, 700); g.restore();
+  // shawl over the shoulders
+  g.beginPath(); g.moveTo(210, 340); g.quadraticCurveTo(300, 300, 390, 340); g.lineTo(380, 470); g.quadraticCurveTo(300, 500, 220, 470); g.closePath(); fillInk(g, "#efe2c4", 6);
+  line(g, [[300, 320], [300, 960]], "rgba(36,23,38,0.35)", 3);
+  // neck and head with turban
+  g.beginPath(); g.ellipse(300, 250, 42, 52, 0, 0, Math.PI * 2); fillInk(g, "#a8724e", 6);
+  g.beginPath(); g.ellipse(300, 214, 58, 44, 0, 0, Math.PI * 2); fillInk(g, turban, 6);
+  line(g, [[248, 220], [352, 196]], "rgba(36,23,38,0.4)", 4);
+  line(g, [[250, 238], [350, 214]], "rgba(36,23,38,0.4)", 4);
+  path(g, [[250, 962], [246, 975], [296, 975], [292, 960]]); fillInk(g, "#6b4a2e", 4);
+  path(g, [[312, 960], [308, 975], [356, 975], [352, 960]]); fillInk(g, "#6b4a2e", 4);
+};
+
+/** The king (the boy's father) seen from behind: tall gold crown, red cape with a gold border. */
+export const drawKingBack = (g: G) => {
+  g.beginPath(); g.moveTo(200, 330); g.quadraticCurveTo(140, 640, 150, 962); g.lineTo(450, 962); g.quadraticCurveTo(460, 640, 400, 330); g.quadraticCurveTo(300, 300, 200, 330); g.closePath();
+  fillInk(g, "#8e2430");
+  g.save(); g.clip(); g.fillStyle = "rgba(40,10,30,0.3)"; g.fillRect(320, 300, 160, 700); g.restore();
+  line(g, [[158, 940], [442, 940]], "#e3b23c", 16);
+  line(g, [[205, 340], [170, 940]], "#e3b23c", 10);
+  line(g, [[395, 340], [430, 940]], "#e3b23c", 10);
+  // shoulders and head with dark hair
+  g.beginPath(); g.ellipse(300, 246, 50, 58, 0, 0, Math.PI * 2); fillInk(g, "#2b1d1a", 6);
+  // crown
+  path(g, [[246, 210], [250, 120], [270, 160], [286, 100], [300, 150], [314, 100], [330, 160], [350, 120], [354, 210]]); fillInk(g, "#e3b23c", 6);
+  g.beginPath(); g.arc(300, 178, 9, 0, Math.PI * 2); g.fillStyle = "#c0353a"; g.fill();
+  line(g, [[246, 206], [354, 206]], "#b8861f", 6);
+};
+
+/** A man walking away from us on a road: simple cream robe, dark hair in a knot, a staff. phase 0..1 = walk cycle. */
+export const drawWandererBack = (g: G, phase: number) => {
+  const s = Math.sin(phase * Math.PI * 2);
+  // legs (only the feet show under the robe)
+  path(g, [[262 + 10 * s, 940], [258 + 10 * s, 975], [300 + 10 * s, 975], [300 + 10 * s, 940]]); fillInk(g, "#9c6a48", 4);
+  path(g, [[312 - 10 * s, 940], [308 - 10 * s, 975], [350 - 10 * s, 975], [350 - 10 * s, 940]]); fillInk(g, "#9c6a48", 4);
+  // staff in the right hand
+  line(g, [[400, 260], [418 + 6 * s, 975]], "#6b4a2e", 10);
+  line(g, [[400, 260], [418 + 6 * s, 975]], INK, 3);
+  g.beginPath(); g.moveTo(240, 320); g.quadraticCurveTo(210, 620, 230, 948); g.lineTo(380, 948); g.quadraticCurveTo(396, 620, 362, 320); g.quadraticCurveTo(300, 300, 240, 320); g.closePath();
+  fillInk(g, "#efe2c4");
+  g.save(); g.clip(); g.fillStyle = "rgba(120,80,60,0.25)"; g.fillRect(300, 300, 120, 700); g.restore();
+  line(g, [[250, 340], [330, 620], [372, 940]], "#d8c49c", 5);
+  g.beginPath(); g.ellipse(398, 470, 18, 22, 0, 0, Math.PI * 2); fillInk(g, "#9c6a48", 5);
+  g.beginPath(); g.ellipse(300, 256, 44, 52, 0, 0, Math.PI * 2); fillInk(g, "#2b1d1a", 6);
+  g.beginPath(); g.arc(300, 196, 20, 0, Math.PI * 2); fillInk(g, "#2b1d1a", 5);
+};
+
 /** Make a camera-facing card texture from a drawing function. */
 export const cardTexture = (draw: (g: G) => void) => {
   const c = document.createElement("canvas");
