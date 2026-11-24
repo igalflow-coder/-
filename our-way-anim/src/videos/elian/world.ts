@@ -6,12 +6,12 @@ import { NOINK } from "../buddha/ink";
 import { cardTexture, makeCard } from "../buddha/figures";
 import { blobTex } from "../buddha/paint";
 import {
-  DynTex, stoneTex, shelfTex, windowTex, paperTex, envelopeFrontTex, keyboardTex, letterTex, sealTex, deskTex, wallTex, calendarDraw, screenDraw,
+  DynTex, stoneTex, shelfTex, windowTex, paperTex, envelopeFrontTex, keyboardTex, keyboardDraw, LETTER, letterTex, sealTex, deskTex, wallTex, calendarDraw, screenDraw,
   chalkTex, moonWindowTex, facadeTex, mirrorDraw, rng, ScreenKind,
 } from "./paint";
-import { drawElianBack, drawTeacher, drawSeatedBack, drawChildBack } from "./figures";
+import { drawElianBack, drawTeacher, drawSeatedBack, drawChildBack, drawChildHands, drawHandTop } from "./figures";
 
-export type SetName = "desk" | "hall" | "cal" | "room" | "city" | "row" | "class";
+export type SetName = "desk" | "hall" | "cal" | "room" | "city" | "row" | "class" | "typing";
 export const ORIGIN: Record<SetName, THREE.Vector3> = {
   desk: new THREE.Vector3(0, 0, 0),
   hall: new THREE.Vector3(400, 0, 0),
@@ -20,6 +20,7 @@ export const ORIGIN: Record<SetName, THREE.Vector3> = {
   city: new THREE.Vector3(1600, 0, 0),
   row: new THREE.Vector3(2000, 0, 0),
   class: new THREE.Vector3(2400, 0, 0),
+  typing: new THREE.Vector3(2800, 0, 0),
 };
 
 export type LookName = "desk" | "hall" | "day" | "night" | "city" | "office";
@@ -132,7 +133,8 @@ export class World {
   // desk
   flap!: THREE.Group; seal!: THREE.Mesh; letter!: THREE.Mesh; envGlow!: THREE.Mesh; envLight!: THREE.PointLight;
   // hall
-  elian!: Actor; elianTex: THREE.Texture[] = []; kids: Actor[] = []; museumHalo!: THREE.Mesh; mirror!: DynTex; mirrorGlass!: THREE.Mesh; mirrorHalo!: THREE.Mesh;
+  elian!: Actor; elianTex: THREE.Texture[] = []; kids: Actor[] = []; kidTex: THREE.Texture[][] = []; museumHalo!: THREE.Mesh;
+  keys!: DynTex; hands: THREE.Mesh[] = []; mirror!: DynTex; mirrorGlass!: THREE.Mesh; mirrorHalo!: THREE.Mesh;
   // present
   calendar!: DynTex; roomScreen!: DynTex; nightScreen!: DynTex; rowScreens: DynTex[] = []; codeScreen!: DynTex;
   lonely!: Actor; teacher!: Actor; teacherTex: THREE.Texture[] = []; coder!: Actor; coderTex: THREE.Texture[] = [];
@@ -167,7 +169,7 @@ export class World {
       this.sets[k] = g;
       this.root.add(g);
     }
-    this.buildDesk(); this.buildHall(); this.buildCal(); this.buildRoom(); this.buildCity(); this.buildRow(); this.buildClass();
+    this.buildDesk(); this.buildHall(); this.buildCal(); this.buildRoom(); this.buildCity(); this.buildRow(); this.buildClass(); this.buildTyping();
   }
 
   private buildDesk() {
@@ -267,9 +269,11 @@ export class World {
     const kh = softPlane(2.2, 2.2, radialTex("rgba(255,214,150,0.7)", "rgba(255,190,110,0)"), "#ffffff", 0.5);
     kh.position.set(0, 1.4, -0.5); K.add(kh); this.museumHalo = kh;
     R.add(K);
+    const kidLook: [string, string][] = [["#7a4a8a", "#2b1d1a"], ["#2f6b6a", "#8a6a3a"]];
+    this.kidTex = kidLook.map(([t, h]) => [cardTexture((g) => drawChildBack(g, t, h)), cardTexture((g) => drawChildHands(g, t, h))]);
     this.kids = [
-      new Actor(cardTexture((g) => drawChildBack(g, "#7a4a8a", "#2b1d1a")), 1.15, R, -0.55, -28.7),
-      new Actor(cardTexture((g) => drawChildBack(g, "#2f6b6a", "#8a6a3a")), 1.05, R, 0.5, -28.85),
+      new Actor(this.kidTex[0][0], 1.15, R, -0.55, -28.7),
+      new Actor(this.kidTex[1][0], 1.05, R, 0.5, -28.85),
     ];
     this.actors.push(...this.kids);
     this.elianTex = [0, 0.25, 0.5, 0.75].map((p) => cardTexture((g) => drawElianBack(g, p)));
@@ -355,7 +359,7 @@ export class World {
     const people = [
       { top: "#b8584a", hair: "#3a2418" }, { top: "#3f6a5a", hair: "#1a1414", headphones: true }, { top: "#6a5a8a", hair: "#8a6a3a" },
     ];
-    (["poem", "code", "email"] as ScreenKind[]).forEach((k, i) => {
+    ((LETTER.no === 2 ? ["love", "argue", "search"] : ["poem", "code", "email"]) as ScreenKind[]).forEach((k, i) => {
       const x = i * 2.8;
       desk(R, x, -0.75, 1.9, 0.8, "#8a7058");
       this.rowScreens.push(monitor(R, x, 1.16, -0.95, k));
@@ -370,6 +374,22 @@ export class World {
     this.coder = new Actor(this.coderTex[0], 1.5, R, 20, 0.05, 0.22, false);
     this.actors.push(this.coder);
     const L = new THREE.PointLight("#c8d6ff", 2.0, 4, 2); L.position.set(20, 1.2, -0.3); R.add(L);
+  }
+
+  private buildTyping() {
+    const R = this.sets.typing;
+    R.add(mesh(new THREE.BoxGeometry(6, 0.1, 4), toon("#5a4232"), 0, -0.05, 0));
+    R.add(mesh(new THREE.BoxGeometry(1.75, 0.06, 0.62), toon("#bdb39c"), 0, 0.03, 0));
+    this.keys = new DynTex(1024, 360, (g, v) => keyboardDraw(g, v), 1);
+    const top = mesh(new THREE.PlaneGeometry(1.7, 0.6), new THREE.MeshToonMaterial({ map: this.keys.t, gradientMap: toonRamp() }), 0, 0.062, 0);
+    top.rotation.x = -Math.PI / 2; R.add(top);
+    for (const side of [-1, 1]) {
+      const h = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.7), new THREE.MeshBasicMaterial({ map: cardTexture((g) => drawHandTop(g, side)), alphaTest: 0.5, color: "#fff4e4" }));
+      h.rotation.x = -Math.PI / 2; h.position.set(side * 0.27, 0.12, 0.36); h.layers.set(NOINK); R.add(h); this.hands.push(h);
+    }
+    const glowS = softPlane(3, 2, radialTex("rgba(190,210,255,0.6)", "rgba(190,210,255,0)"), "#ffffff", 0.5);
+    glowS.position.set(0, 0.6, -0.9); R.add(glowS);
+    const L = new THREE.PointLight("#cfe0ff", 2.2, 4, 2); L.position.set(0, 0.8, -0.6); R.add(L);
   }
 
   private buildClass() {
@@ -434,6 +454,10 @@ export class World {
     (this.mirrorHalo.material as THREE.MeshBasicMaterial).opacity = st.halo ?? 0.25;
     this.mirrorHalo.lookAt(cam.position);
     this.museumHalo.lookAt(cam.position);
+    this.kids.forEach((k, i) => setMap(k.card, this.kidTex[i][st.hands ? 1 : 0]));
+    // typing: one key down at a time, the hands bob in turn
+    this.keys.set(st.key ?? -1);
+    this.hands.forEach((h, i) => { h.position.y = 0.12 + Math.max(0, Math.sin((st.tap ?? 0) * Math.PI * 2 + i * Math.PI)) * 0.05; });
 
     // present
     this.calendar.set(st.circle ?? 0);

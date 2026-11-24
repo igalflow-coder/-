@@ -57,6 +57,31 @@ export const drawChildBack = (g: G, tunic: string, hair: string) => {
   g.beginPath(); g.ellipse(300, 470, 74, 84, 0, 0, Math.PI * 2); fillInk(g, hair, 6);
 };
 
+/** A child from behind looking down at their own raised hands: head bowed, forearms up, both palms showing at the sides. */
+export const drawChildHands = (g: G, tunic: string, hair: string) => {
+  g.beginPath(); g.rect(262, 900, 30, 72); fillInk(g, "#3a3346", 4); g.beginPath(); g.rect(308, 900, 30, 72); fillInk(g, "#3a3346", 4);
+  g.beginPath(); g.moveTo(236, 570); g.quadraticCurveTo(214, 760, 226, 910); g.lineTo(374, 910); g.quadraticCurveTo(386, 760, 364, 570); g.quadraticCurveTo(300, 550, 236, 570); g.closePath();
+  fillInk(g, tunic); shade(g, 312, 70);
+  line(g, [[230, 880], [370, 880]], "#d6a94a", 8);
+  for (const sx of [-1, 1]) {
+    g.beginPath(); g.moveTo(300 + sx * 60, 590); g.quadraticCurveTo(300 + sx * 120, 640, 300 + sx * 112, 560); g.lineTo(300 + sx * 96, 556); g.quadraticCurveTo(300 + sx * 96, 610, 300 + sx * 52, 610); g.closePath(); fillInk(g, tunic, 5);
+    g.beginPath(); g.ellipse(300 + sx * 106, 528, 20, 30, sx * 0.2, 0, Math.PI * 2); fillInk(g, "#d8a88a", 4);
+    for (let f = 0; f < 4; f++) line(g, [[300 + sx * (94 + f * 7), 506], [300 + sx * (92 + f * 8), 482 - (f === 1 || f === 2 ? 6 : 0)]], "#d8a88a", 7);
+  }
+  g.beginPath(); g.ellipse(300, 500, 74, 80, 0, 0, Math.PI * 2); fillInk(g, hair, 6);
+};
+
+/** A hand seen from above, fingers pointing up the canvas (to the keyboard), with a shirt cuff. side -1 left, 1 right. */
+export const drawHandTop = (g: G, side: number, sleeve = "#3a4a6a") => {
+  const skin = "#d6a07e";
+  g.beginPath(); g.roundRect(200, 640, 200, 360, 30); fillInk(g, sleeve, 6);
+  g.beginPath(); g.ellipse(300, 560, 110, 120, 0, 0, Math.PI * 2); fillInk(g, skin, 6);
+  const xs = [222, 268, 316, 362];
+  xs.forEach((x, i) => { const len = [150, 190, 200, 170][side > 0 ? i : 3 - i]; g.beginPath(); g.roundRect(x - 20, 470 - len, 40, len + 40, 20); fillInk(g, skin, 5); });
+  const tx = side > 0 ? 180 : 420;
+  g.beginPath(); g.ellipse(tx, 560, 30, 80, side * -0.7, 0, Math.PI * 2); fillInk(g, skin, 5);
+};
+
 /** A teacher at the board, side silhouette facing left. pose 0 = arm raised with chalk, 1 = both hands on the head. */
 export const drawTeacher = (g: G, pose: number) => {
   const body = "#5a4a5e", hair = "#2b1d1a", skin = "#c99a78";

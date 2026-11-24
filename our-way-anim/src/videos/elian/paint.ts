@@ -31,6 +31,9 @@ const mottle = (g: G, w: number, h: number, base: string, n: number, seed: numbe
   }
 };
 
+/** Which letter is being built (set by the composition before the world is made). */
+export const LETTER = { no: 1 };
+
 export const SERIF = "Georgia, 'DejaVu Serif', serif";
 export const SANS = "'Segoe UI', Arial, sans-serif";
 export const MONO = "Consolas, 'Courier New', monospace";
@@ -141,21 +144,26 @@ export const envelopeFrontTex = () => {
   g.beginPath(); g.moveTo(1024, 0); g.lineTo(554, 360); g.stroke();
   g.strokeStyle = "rgba(110,75,35,0.45)"; g.lineWidth = 8; g.strokeRect(4, 4, 1016, 675);
   g.fillStyle = "rgba(43,42,74,0.85)"; g.font = `italic 64px ${SERIF}`;
-  g.fillText("Letter No. 1", 70, 620);
+  g.fillText(`Letter No. ${LETTER.no}`, 70, 620);
   return tex(c);
 };
 
 /** An old beige keyboard, seen from above: rows of square keys with letters, a long space bar. */
 export const keyboardTex = () => {
   const [c, g] = canvas(1024, 360);
+  keyboardDraw(g, -1);
+  return tex(c);
+};
+/** The keyboard drawing; `pressed` (0..35) darkens one key, -1 none. */
+export const keyboardDraw = (g: G, pressed: number) => {
   mottle(g, 1024, 360, "#cfc5ae", 200, 41, 0.06);
+  let k = 0;
   const rows = ["1234567890", "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
   g.textAlign = "center"; g.textBaseline = "middle"; g.font = `bold 30px ${SANS}`;
   rows.forEach((r, y) => { const off = 40 + y * 26; for (let i = 0; i < r.length; i++) { const x = off + i * 82, yy = 30 + y * 72;
-    g.fillStyle = "#e9e2d0"; g.fillRect(x, yy, 70, 62); g.strokeStyle = "rgba(60,50,40,0.5)"; g.lineWidth = 3; g.strokeRect(x, yy, 70, 62);
+    g.fillStyle = k++ === Math.round(pressed) ? "#9c937e" : "#e9e2d0"; g.fillRect(x, yy, 70, 62); g.strokeStyle = "rgba(60,50,40,0.5)"; g.lineWidth = 3; g.strokeRect(x, yy, 70, 62);
     g.fillStyle = "#3a3430"; g.fillText(r[i], x + 35, yy + 31); } });
-  g.fillStyle = "#e9e2d0"; g.fillRect(250, 318, 480, 34); g.strokeRect(250, 318, 480, 34);
-  return tex(c);
+  g.fillStyle = Math.round(pressed) === 36 ? "#9c937e" : "#e9e2d0"; g.fillRect(250, 318, 480, 34); g.strokeRect(250, 318, 480, 34);
 };
 
 /** The letter inside: handwritten lines in iron-gall ink, the date "2140" at the top. */
@@ -259,12 +267,15 @@ export const calendarDraw = (g: G, v: number, W: number, H: number) => {
 };
 
 /** Generic chat window (no real product): title strip, empty area, input box. kind selects the content; v = progress. */
-export type ScreenKind = "empty" | "poem" | "code" | "email" | "night";
+export type ScreenKind = "empty" | "poem" | "code" | "email" | "night" | "love" | "argue" | "search";
 const SCREEN_TEXT: Record<Exclude<ScreenKind, "empty">, [string, string[]]> = {
   poem: ["write a birthday poem for my mom", ["Sixty candles, one small light,", "you taught me how to hold it right.", "Happy birthday, Mom."]],
   code: ["fix my code, it crashes", ["for (let i = 0; i < n; i++) {", "  total += items[i].price;", "}", "// fixed: i <= n read past the end"]],
   email: ["help me write the email I'm afraid to send", ["Dear Dana,", "I've been meaning to say this", "for a long time. I'm sorry."]],
   night: ["are you still there?", ["I'm here.", "Tell me about your day."]],
+  love: ["help me write a love letter", ["I don't know how to say this,", "so I'll just say it:", "I think about you every day."]],
+  argue: ["help me reply to this comment", ["With respect, I think you've", "misunderstood my point.", "Here's why..."]],
+  search: ["why can't I sleep at 3am", ["Here are a few things", "that might help tonight..."]],
 };
 export const screenDraw = (kind: ScreenKind) => (g: G, v: number, W: number, H: number) => {
   // v = progress (0..1) + 10 while the cursor is shown

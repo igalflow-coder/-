@@ -14,7 +14,7 @@ import { LensBlur, GrainEffect } from "../buddha/lensblur";
 import { GradeEffect, GRADES, GradeParams } from "../buddha/grade";
 import { World, ORIGIN, SetName, LookName } from "./world";
 import { FPS, TOTAL, EDGES, BEAT, LINES, TITLE_LINES, chunks } from "./timeline";
-import { rng, SERIF } from "./paint";
+import { rng, SERIF, LETTER } from "./paint";
 
 export { FPS, TOTAL };
 
@@ -220,6 +220,7 @@ const Title: React.FC<{ t: number }> = ({ t }) => {
 };
 
 export const ElianMirror: React.FC = () => {
+  LETTER.no = 1;
   const f = useCurrentFrame();
   const t = f / FPS;
   const s = shotAt(t);
