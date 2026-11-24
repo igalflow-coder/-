@@ -18,23 +18,23 @@ import { rng, SERIF } from "./paint";
 
 export { FPS, TOTAL };
 
-const PAST: GradeParams = {
+export const PAST: GradeParams = {
   ky: [0.07, 0.14, 0.29, 0.55, 0.77, 0.87, 0.93],
   sat: [0.5, 0.58, 0.55],
   tintS: [-0.03, 0.03], tintM: [-0.05, 0.02], tintH: [-0.06, 0.015],
   vig: [0.42, 0.28],
 };
 
-const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-const smooth = (x: number) => { const u = clamp01(x); return u * u * u * (u * (6 * u - 15) + 10); };
-const ease = (x: number) => { const u = clamp01(x); return u * u * (3 - 2 * u); };
-const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
-const L3 = (a: V3, b: V3, u: number): V3 => [lerp(a[0], b[0], u), lerp(a[1], b[1], u), lerp(a[2], b[2], u)];
-const ramp = (t: number, a: number, b: number) => clamp01((t - a) / (b - a));
-type V3 = [number, number, number];
-type Cam = { pos: V3; look: V3; fov: number; focus: V3; cInf: number };
-type Shot = { a: number; b: number; set: SetName; look: LookName; past: boolean; cam: (u: number, t: number) => Cam; state?: (t: number) => Record<string, number> };
-const blinkOn = (t: number) => (Math.floor(t * 1.9) % 2 === 0 ? 10 : 0);
+export const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+export const smooth = (x: number) => { const u = clamp01(x); return u * u * u * (u * (6 * u - 15) + 10); };
+export const ease = (x: number) => { const u = clamp01(x); return u * u * (3 - 2 * u); };
+export const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
+export const L3 = (a: V3, b: V3, u: number): V3 => [lerp(a[0], b[0], u), lerp(a[1], b[1], u), lerp(a[2], b[2], u)];
+export const ramp = (t: number, a: number, b: number) => clamp01((t - a) / (b - a));
+export type V3 = [number, number, number];
+export type Cam = { pos: V3; look: V3; fov: number; focus: V3; cInf: number };
+export type Shot = { a: number; b: number; set: SetName; look: LookName; past: boolean; cam: (u: number, t: number) => Cam; state?: (t: number) => Record<string, number> };
+export const blinkOn = (t: number) => (Math.floor(t * 1.9) % 2 === 0 ? 10 : 0);
 const E = EDGES;
 
 export const SHOTS: Shot[] = [
@@ -97,13 +97,15 @@ export const SHOTS: Shot[] = [
     } },
 ];
 
-export const shotAt = (t: number) => SHOTS.find((s) => t >= s.a && t < s.b) ?? SHOTS[SHOTS.length - 1];
+export const pickShot = (shots: Shot[], t: number) => shots.find((s) => t >= s.a && t < s.b) ?? shots[shots.length - 1];
+export const shotAt = (t: number) => pickShot(SHOTS, t);
 
 const tmp = new THREE.Vector3(), fwd = new THREE.Vector3();
 /** the first window of the city, read from the world once it is built */
-const FW: { p: V3 } = { p: [0, 7.5, -4] };
+export const FW: { p: V3 } = { p: [0, 7.5, -4] };
 
-const Inner: React.FC = () => {
+/** The 3D world plus the post chain, posed by the shot list for the current frame. */
+export const Inner: React.FC<{ shots?: Shot[] }> = ({ shots = SHOTS }) => {
   const f = useCurrentFrame();
   const t = f / FPS;
   const { camera, scene } = useThree();
@@ -116,7 +118,7 @@ const Inner: React.FC = () => {
     grade: new GradeEffect(GRADES.golden, 1),
     grain: new GrainEffect({ amount: 0.02, cellPx: 1.6 }),
   }), [camera, scene]);
-  const s = shotAt(t);
+  const s = pickShot(shots, t);
   const u = smooth((t - s.a) / Math.max(0.01, s.b - s.a));
   const c = s.cam(u, t);
   const o = ORIGIN[s.set];
@@ -153,7 +155,7 @@ const Inner: React.FC = () => {
 };
 
 /** Old archive print on top of the 2020s: scratches, dust, flicker, burnt edges. Deterministic per frame. */
-const ArchivePrint: React.FC<{ f: number }> = ({ f }) => {
+export const ArchivePrint: React.FC<{ f: number }> = ({ f }) => {
   const r = rng(f * 7919 + 13);
   const scratches = Array.from({ length: 1 + Math.floor(r() * 3) }, () => ({ x: r() * 1080, w: 1 + r() * 2.5, o: 0.15 + r() * 0.35, y0: r() * 600, y1: 1300 + r() * 620 }));
   const dust = Array.from({ length: 6 + Math.floor(r() * 10) }, () => ({ x: r() * 1080, y: r() * 1920, s: 2 + r() * 7, d: r() > 0.5 }));
@@ -172,8 +174,9 @@ const ArchivePrint: React.FC<{ f: number }> = ({ f }) => {
 
 const CAPS = chunks(LINES.filter((_, i) => !TITLE_LINES.includes(i)));
 
-const Caption: React.FC<{ t: number }> = ({ t }) => {
-  const c = CAPS.find((x) => t >= x.a && t < x.b);
+/** 1-3 word captions, white with a dark outline, at the channel's fixed height. */
+export const CaptionLayer: React.FC<{ t: number; caps: { a: number; b: number; text: string }[] }> = ({ t, caps }) => {
+  const c = caps.find((x) => t >= x.a && t < x.b);
   if (!c) return null;
   const age = (t - c.a) * FPS;
   const pop = age < 3 ? 0.85 + 0.05 * age : 1;
@@ -188,9 +191,12 @@ const Caption: React.FC<{ t: number }> = ({ t }) => {
   );
 };
 
+/** Gold serif title style shared by all letters. */
+export const GOLD = { fontFamily: SERIF, color: "#f2cf7a", textShadow: "0 0 24px rgba(255,190,90,0.65), 0 3px 0 #2a1a08", textAlign: "center" as const };
+
 /** Gold serif titles: "The Second Mirror" over the glass, and the sign-off over the sealed letter. */
 const Title: React.FC<{ t: number }> = ({ t }) => {
-  const gold = { fontFamily: SERIF, color: "#f2cf7a", textShadow: "0 0 24px rgba(255,190,90,0.65), 0 3px 0 #2a1a08", textAlign: "center" as const };
+  const gold = GOLD;
   const fade = (a: number, b: number, d = 0.35) => clamp01(Math.min((t - a) / d, (b - t) / d));
   const m = fade(LINES[10].a, LINES[10].b + 0.7);
   const e1 = fade(LINES[14].a, 63.5, 0.5), e2 = fade(57.1, 63.5, 0.6), e3 = fade(58.7, 63.5, 0.6);
@@ -235,7 +241,7 @@ export const ElianMirror: React.FC = () => {
       {dark > 0 && <AbsoluteFill style={{ background: "#000", opacity: dark }} />}
       {burn > 0 && <AbsoluteFill style={{ background: "radial-gradient(circle at 60% 40%, #fff1c8 0%, #ff9a3a 45%, #5a1a00 100%)", opacity: burn * 0.9, mixBlendMode: "screen" }} />}
       {goldIn > 0 && <AbsoluteFill style={{ background: "radial-gradient(circle at 50% 45%, #fffaf0 0%, #ffd890 50%, #c88a30 100%)", opacity: goldIn * 0.95 }} />}
-      <Caption t={t} />
+      <CaptionLayer t={t} caps={CAPS} />
       <Title t={t} />
     </AbsoluteFill>
   );
