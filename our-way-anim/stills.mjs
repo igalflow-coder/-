@@ -1,8 +1,8 @@
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import path from "node:path";
-const [prefix, frames, scale = "0.5", gl = "swangle"] = process.argv.slice(2);
-const browserExecutable = "/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell";
+const [prefix, frames, scale = "0.5", gl = "angle"] = process.argv.slice(2);
+const browserExecutable = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const chromiumOptions = { gl };
 const serveUrl = await bundle({ entryPoint: path.resolve("src/index.ts"), publicDir: path.resolve("public") });
 const composition = await selectComposition({ serveUrl, id: process.env.COMP || "BuddhaPart1", browserExecutable, chromiumOptions });
