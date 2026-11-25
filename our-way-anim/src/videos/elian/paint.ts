@@ -267,7 +267,7 @@ export const calendarDraw = (g: G, v: number, W: number, H: number) => {
 };
 
 /** Generic chat window (no real product): title strip, empty area, input box. kind selects the content; v = progress. */
-export type ScreenKind = "empty" | "poem" | "code" | "email" | "night" | "love" | "argue" | "search";
+export type ScreenKind = "empty" | "poem" | "code" | "email" | "night" | "love" | "argue" | "search" | "first";
 const SCREEN_TEXT: Record<Exclude<ScreenKind, "empty">, [string, string[]]> = {
   poem: ["write a birthday poem for my mom", ["Sixty candles, one small light,", "you taught me how to hold it right.", "Happy birthday, Mom."]],
   code: ["fix my code, it crashes", ["for (let i = 0; i < n; i++) {", "  total += items[i].price;", "}", "// fixed: i <= n read past the end"]],
@@ -276,6 +276,7 @@ const SCREEN_TEXT: Record<Exclude<ScreenKind, "empty">, [string, string[]]> = {
   love: ["help me write a love letter", ["I don't know how to say this,", "so I'll just say it:", "I think about you every day."]],
   argue: ["help me reply to this comment", ["With respect, I think you've", "misunderstood my point.", "Here's why..."]],
   search: ["why can't I sleep at 3am", ["Here are a few things", "that might help tonight..."]],
+  first: ["hello? what can you do?", ["Hi! I'm new here too.", "What would you like", "to make together?"]],
 };
 export const screenDraw = (kind: ScreenKind) => (g: G, v: number, W: number, H: number) => {
   // v = progress (0..1) + 10 while the cursor is shown

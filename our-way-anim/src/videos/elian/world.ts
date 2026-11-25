@@ -305,7 +305,7 @@ export class World {
     for (const dx of [-0.6, 0, 0.6]) R.add(mesh(new THREE.BoxGeometry(0.05, 1.75, 0.06), toon("#15151e"), 1.7 + dx, 1.9, -2.86));
     desk(R, 0, -2.2, 2.0, 0.9, "#4a3a2e");
     this.roomScreen = monitor(R, 0, 1.18, -2.45, "empty");
-    this.nightScreen = new DynTex(1024, 640, screenDraw("night"));
+    this.nightScreen = new DynTex(1024, 640, screenDraw(LETTER.no === 3 ? "first" : "night"));
     R.add(mesh(new THREE.BoxGeometry(0.6, 0.02, 0.2), toon("#2a2a32"), 0, 0.8, -2.0));
     R.add(mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.11, 14), toon("#c9b8a0"), 0.6, 0.84, -2.0));
     const L = new THREE.PointLight("#aac0ff", 2.4, 4, 2);
