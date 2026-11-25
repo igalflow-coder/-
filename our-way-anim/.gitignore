@@ -1,0 +1,9 @@
+audio/*.wav
+*.part.mp4
+out/
+# big renders stay local (the upload copy is on the Desktop, in OurWay/)
+renders/OurWay_Elian_*.mp4
+# free-plan narration takes: not licensed for publishing
+public/voice/elian_mirror_v1.mp3
+public/voice/elian_mirror_v2_free.mp3
+renders/OurWay_Elian_Letter2*.mp4
