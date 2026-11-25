@@ -32,7 +32,7 @@ const mottle = (g: G, w: number, h: number, base: string, n: number, seed: numbe
 };
 
 /** Which letter is being built (set by the composition before the world is made). */
-export const LETTER = { no: 1 };
+export const LETTER: { no: number; label?: string } = { no: 1 };
 
 export const SERIF = "Georgia, 'DejaVu Serif', serif";
 export const SANS = "'Segoe UI', Arial, sans-serif";
@@ -144,7 +144,7 @@ export const envelopeFrontTex = () => {
   g.beginPath(); g.moveTo(1024, 0); g.lineTo(554, 360); g.stroke();
   g.strokeStyle = "rgba(110,75,35,0.45)"; g.lineWidth = 8; g.strokeRect(4, 4, 1016, 675);
   g.fillStyle = "rgba(43,42,74,0.85)"; g.font = `italic 64px ${SERIF}`;
-  g.fillText(`Letter No. ${LETTER.no}`, 70, 620);
+  g.fillText(LETTER.label ?? `Letter No. ${LETTER.no}`, 70, 620);
   return tex(c);
 };
 
@@ -167,6 +167,31 @@ export const keyboardDraw = (g: G, pressed: number) => {
 };
 
 /** The letter inside: handwritten lines in iron-gall ink, the date "2140" at the top. */
+/** A sheet of lined paper on a 2020s desk; v 0..1 = handwriting written so far (0 = blank). */
+const PAGE_LINES = 8;
+export const pageDraw = (g: G, v: number, W: number, H: number) => {
+  mottle(g, W, H, "#f7f1e2", 300, 57, 0.04);
+  g.strokeStyle = "rgba(110,140,190,0.35)"; g.lineWidth = 2;
+  for (let y = 200; y < H - 60; y += 64) { g.beginPath(); g.moveTo(40, y); g.lineTo(W - 40, y); g.stroke(); }
+  g.strokeStyle = "rgba(200,90,90,0.4)"; g.beginPath(); g.moveTo(110, 0); g.lineTo(110, H); g.stroke();
+  if (v <= 0) return;
+  const r = rng(808);
+  g.strokeStyle = "rgba(30,40,90,0.85)"; g.lineWidth = 4; g.lineCap = "round";
+  const total = v * PAGE_LINES;
+  for (let i = 0; i < Math.ceil(total); i++) {
+    const y = 200 + i * 64 - 10, end = 150 + (W - 230) * Math.min(1, total - i) * (i === PAGE_LINES - 1 ? 0.55 : 1);
+    g.beginPath(); g.moveTo(140, y);
+    for (let x = 140; x < end; x += 6) g.lineTo(x, y + Math.sin(x * 0.19 + i * 2) * 7 + Math.sin(x * 0.05) * 3 + (r() - 0.5) * 2);
+    g.stroke();
+  }
+};
+/** Where the pen tip is (canvas px) for a given progress v. */
+export const pagePen = (v: number, W: number): [number, number] => {
+  const total = v * PAGE_LINES, i = Math.min(PAGE_LINES - 1, Math.floor(total));
+  const frac = total - i;
+  return [150 + (W - 230) * frac * (i === PAGE_LINES - 1 ? 0.55 : 1), 200 + i * 64 - 10];
+};
+
 export const letterTex = () => {
   const [c, g] = canvas(1024, 732);
   mottle(g, 1024, 732, "#f6edd8", 300, 33, 0.05);

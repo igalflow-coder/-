@@ -109,7 +109,7 @@ const Titles2: React.FC<{ t: number }> = ({ t }) => {
 };
 
 export const ElianLetter2: React.FC = () => {
-  LETTER.no = 2;
+  LETTER.no = 2; LETTER.label = undefined;
   const f = useCurrentFrame();
   const t = f / FPS;
   const s = pickShot(SHOTS2, t);

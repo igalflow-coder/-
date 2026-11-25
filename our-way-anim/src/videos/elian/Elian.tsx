@@ -220,7 +220,7 @@ const Title: React.FC<{ t: number }> = ({ t }) => {
 };
 
 export const ElianMirror: React.FC = () => {
-  LETTER.no = 1;
+  LETTER.no = 1; LETTER.label = undefined;
   const f = useCurrentFrame();
   const t = f / FPS;
   const s = shotAt(t);

@@ -111,7 +111,7 @@ const Titles3: React.FC<{ t: number }> = ({ t }) => {
 };
 
 export const ElianLetter3: React.FC = () => {
-  LETTER.no = 3;
+  LETTER.no = 3; LETTER.label = undefined;
   const f = useCurrentFrame();
   const t = f / FPS;
   const s = pickShot(SHOTS3, t);

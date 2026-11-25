@@ -6,12 +6,12 @@ import { NOINK } from "../buddha/ink";
 import { cardTexture, makeCard } from "../buddha/figures";
 import { blobTex } from "../buddha/paint";
 import {
-  DynTex, stoneTex, shelfTex, windowTex, paperTex, envelopeFrontTex, keyboardTex, keyboardDraw, LETTER, letterTex, sealTex, deskTex, wallTex, calendarDraw, screenDraw,
+  DynTex, pageDraw, pagePen, stoneTex, shelfTex, windowTex, paperTex, envelopeFrontTex, keyboardTex, keyboardDraw, LETTER, letterTex, sealTex, deskTex, wallTex, calendarDraw, screenDraw,
   chalkTex, moonWindowTex, facadeTex, mirrorDraw, rng, ScreenKind,
 } from "./paint";
 import { drawElianBack, drawTeacher, drawSeatedBack, drawChildBack, drawChildHands, drawHandTop } from "./figures";
 
-export type SetName = "desk" | "hall" | "cal" | "room" | "city" | "row" | "class" | "typing";
+export type SetName = "desk" | "hall" | "cal" | "room" | "city" | "row" | "class" | "typing" | "page";
 export const ORIGIN: Record<SetName, THREE.Vector3> = {
   desk: new THREE.Vector3(0, 0, 0),
   hall: new THREE.Vector3(400, 0, 0),
@@ -21,6 +21,7 @@ export const ORIGIN: Record<SetName, THREE.Vector3> = {
   row: new THREE.Vector3(2000, 0, 0),
   class: new THREE.Vector3(2400, 0, 0),
   typing: new THREE.Vector3(2800, 0, 0),
+  page: new THREE.Vector3(3200, 0, 0),
 };
 
 export type LookName = "desk" | "hall" | "day" | "night" | "city" | "office";
@@ -134,7 +135,7 @@ export class World {
   flap!: THREE.Group; seal!: THREE.Mesh; letter!: THREE.Mesh; envGlow!: THREE.Mesh; envLight!: THREE.PointLight;
   // hall
   elian!: Actor; elianTex: THREE.Texture[] = []; kids: Actor[] = []; kidTex: THREE.Texture[][] = []; museumHalo!: THREE.Mesh;
-  keys!: DynTex; hands: THREE.Mesh[] = []; mirror!: DynTex; mirrorGlass!: THREE.Mesh; mirrorHalo!: THREE.Mesh;
+  keys!: DynTex; hands: THREE.Mesh[] = []; page!: DynTex; pen!: THREE.Group; mirror!: DynTex; mirrorGlass!: THREE.Mesh; mirrorHalo!: THREE.Mesh;
   // present
   calendar!: DynTex; roomScreen!: DynTex; nightScreen!: DynTex; rowScreens: DynTex[] = []; codeScreen!: DynTex;
   lonely!: Actor; teacher!: Actor; teacherTex: THREE.Texture[] = []; coder!: Actor; coderTex: THREE.Texture[] = [];
@@ -169,7 +170,7 @@ export class World {
       this.sets[k] = g;
       this.root.add(g);
     }
-    this.buildDesk(); this.buildHall(); this.buildCal(); this.buildRoom(); this.buildCity(); this.buildRow(); this.buildClass(); this.buildTyping();
+    this.buildDesk(); this.buildHall(); this.buildCal(); this.buildRoom(); this.buildCity(); this.buildRow(); this.buildClass(); this.buildTyping(); this.buildPage();
   }
 
   private buildDesk() {
@@ -376,6 +377,23 @@ export class World {
     const L = new THREE.PointLight("#c8d6ff", 2.0, 4, 2); L.position.set(20, 1.2, -0.3); R.add(L);
   }
 
+  private buildPage() {
+    const R = this.sets.page;
+    const top = mesh(new THREE.PlaneGeometry(8, 6), toon("#ffffff", deskTex()));
+    top.rotation.x = -Math.PI / 2; top.castShadow = false; R.add(top);
+    this.page = new DynTex(768, 1024, pageDraw, 1 / 400);
+    const sheet = mesh(new THREE.PlaneGeometry(0.75, 1.0), new THREE.MeshToonMaterial({ map: this.page.t, gradientMap: toonRamp() }), 0, 0.005, 0);
+    sheet.rotation.x = -Math.PI / 2; sheet.castShadow = false; R.add(sheet);
+    this.pen = new THREE.Group();
+    const body = mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.32, 12), toon("#1e2a5a"), 0, 0.16, 0);
+    const tip = mesh(new THREE.ConeGeometry(0.014, 0.04, 12), toon("#c9a35a"), 0, -0.02, 0); tip.rotation.x = Math.PI;
+    this.pen.add(body, tip);
+    R.add(this.pen);
+    R.add(mesh(new THREE.BoxGeometry(0.5, 0.06, 0.36), toon("#6b2f3a"), 0.7, 0.03, -0.45));
+    const lamp = new THREE.PointLight("#ffcf8a", 3.2, 4, 2); lamp.position.set(-0.6, 0.9, -0.5); R.add(lamp);
+    const g = softPlane(2.4, 2.4, radialTex("rgba(255,206,140,0.55)", "rgba(255,190,110,0)"), "#ffffff", 0.45); g.position.set(-0.7, 0.6, -0.8); R.add(g);
+  }
+
   private buildTyping() {
     const R = this.sets.typing;
     R.add(mesh(new THREE.BoxGeometry(6, 0.1, 4), toon("#5a4232"), 0, -0.05, 0));
@@ -457,6 +475,14 @@ export class World {
     this.kids.forEach((k, i) => setMap(k.card, this.kidTex[i][st.hands ? 1 : 0]));
     // typing: one key down at a time, the hands bob in turn
     this.keys.set(st.key ?? -1);
+    // page: handwriting so far, the pen follows the line being written (or rests beside the sheet)
+    const wv = st.write ?? 0;
+    this.page.set(wv);
+    if (wv > 0 && wv < 1) {
+      const [px, py] = pagePen(wv, 768);
+      this.pen.position.set((px / 768 - 0.5) * 0.75, 0.02 + Math.abs(Math.sin(wv * 90)) * 0.008, (py / 1024 - 0.5) * 1.0);
+      this.pen.rotation.set(0.5, 0, -0.45);
+    } else { this.pen.position.set(0.48, 0.015, 0.2); this.pen.rotation.set(Math.PI / 2, 0, 0.3); }
     this.hands.forEach((h, i) => { h.position.y = 0.12 + Math.max(0, Math.sin((st.tap ?? 0) * Math.PI * 2 + i * Math.PI)) * 0.05; });
 
     // present
