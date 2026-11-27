@@ -2,17 +2,32 @@
 // Same world, post chain, captions and archive-print look as letter 1 (Elian.tsx); its own shot list and timing.
 // Narration: public/voice/elian_letter2.mp3 (ElevenLabs Starter, voice Jason), placed at VOICE_AT; line times from
 // the pauses in the recording.
+// Version 2 (27.11, decided in the team room): the old opening (0-15.4 s, "This is Elian... what was it for?") is replaced
+// by a new line, public/voice/elian_letter2_open.mp3, over the museum keyboard, under the gold title
+// FOUR YEARS AGO TODAY / NOVEMBER 30, 2022. Everything after 15.4 s of the old film is kept and moved earlier by SHIFT.
+// The hint at letter 3 now plays over a blank page in gold light. The film is driven in "old" time (OT) so the
+// original shot list, captions and score keep their numbers.
 import React from "react";
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
 import { Inner, ArchivePrint, CaptionLayer, GOLD, Shot, pickShot, smooth, ease, lerp, L3, ramp, blinkOn, clamp01, FW } from "./Elian";
 import { chunks, Line } from "./timeline";
 import { LETTER } from "./paint";
 
 export const FPS = 30;
-export const DUR = 48;
-export const TOTAL = DUR * FPS;
+export const OLD_DUR = 48;
 export const VOICE_AT = 0.3;
+/** the new opening: when it starts, how long it is, and where its first sentence ends (film time, from the recording) */
+export const OPEN = { at: 0.7, dur: 5.5, s1: 3.3 };
+/** old film time where the kept part begins (just before "So I tell them", the J-cut into the 2020s) */
+export const T0 = 15.4;
+export const LNEW = Math.round((OPEN.at + OPEN.dur + 0.45) * FPS) / FPS;
+export const SHIFT = LNEW - T0;
+export const DUR = OLD_DUR + SHIFT;
+export const TOTAL = Math.round(DUR * FPS);
+/** first stretch plays the end of the keyboard arc (old shot 3), then the old film runs on from where it lines up */
+const A_OFF = 11.6 - OPEN.s1;
+export const oldT = (t: number) => (t < OPEN.s1 ? t + A_OFF : t - SHIFT);
 
 export const LINES2: Line[] = [
   { a: 0.33, b: 3.1, text: "This is Elian, from the year 2140." },
@@ -29,7 +44,12 @@ export const LINES2: Line[] = [
   { a: 41.12, b: 43.77, text: "See you in the future. You're already on your way." },
 ];
 const TITLES = [10, 11];
-const CAPS = chunks(LINES2.filter((_, i) => !TITLES.includes(i)));
+/** captions in film time: the new opening, then the kept old lines moved by SHIFT */
+const OPEN_LINES: Line[] = [
+  { a: OPEN.at, b: OPEN.s1, text: "In 2140, we keep a keyboard behind glass." },
+  { a: OPEN.s1 + 0.25, b: OPEN.at + OPEN.dur, text: "Children ask what it was for." },
+];
+const CAPS = chunks([...OPEN_LINES, ...LINES2.filter((l, i) => i >= 5 && !TITLES.includes(i)).map((l) => ({ ...l, a: l.a + SHIFT, b: l.b + SHIFT }))]);
 
 /** lateral track that settles on each screen while it is named: love letters, strangers, the night */
 const TK: [number, number][] = [[22.3, -0.35], [24.5, 0.05], [25.0, 2.75], [26.4, 2.9], [26.85, 5.55], [29.2, 5.75]];
@@ -74,14 +94,18 @@ export const SHOTS2: Shot[] = [
   { a: E[7], b: E[8], set: "hall", look: "hall", past: false,
     cam: (u) => ({ pos: L3([1.4, 1.5, -26.4], [0.9, 1.35, -27.2], u), look: [0, 0.75, -28.9], fov: 40, focus: [0, 0.8, -28.8], cInf: 8 }),
     state: (t) => ({ elianZ: -10.5, sunZ: -28, hands: t > 33.7 ? 1 : 0 }) },
-  // 9. the letter closes, the seal comes down: bookend
-  { a: E[8], b: E[9], set: "desk", look: "desk", past: false,
+  // 9. "In my next letter: why I envy you": a blank page in gold light, the hint at letter 3; slow lateral drift
+  { a: E[8], b: 41.0, set: "page", look: "desk", past: false,
+    cam: (u) => ({ pos: L3([-0.45, 1.35, 1.0], [0.35, 1.2, 0.85], u), look: L3([-0.05, 0, 0.05], [0.05, 0, 0.0], u), fov: 40, focus: [0, 0, 0], cInf: 7 }),
+    state: () => ({ write: 0 }) },
+  // 10. the letter closes, the seal comes down: bookend under the sign-off
+  { a: 41.0, b: E[9], set: "desk", look: "desk", past: false,
     cam: (u) => ({ pos: L3([0, 1.2, 3.3], [0, 1.0, 4.4], u), look: L3([0, 0.95, -0.2], [0, 0.9, 0], u), fov: 40, focus: L3([0, 0.8, -0.2], [0, 0.55, 0.1], u), cInf: 7 }),
     state: (t) => {
-      const open = 1 - smooth(ramp(t, 37.7, 38.2));
-      const drop = t < 38.0 ? 1 : 1 - ease(ramp(t, 38.0, 38.3)) ** 1.6;
-      const sq = t < 38.3 ? 0 : Math.max(0, 1 - (t - 38.3) / 0.25) * Math.sin(ramp(t, 38.3, 38.55) * Math.PI);
-      return { open, letter: 0, sealDrop: drop, sealVis: t < 38.0 ? 0 : 1, squash: sq, glow: open * 0.9 + 0.18 };
+      const open = 1 - smooth(ramp(t, 41.1, 41.6));
+      const drop = t < 41.4 ? 1 : 1 - ease(ramp(t, 41.4, 41.7)) ** 1.6;
+      const sq = t < 41.7 ? 0 : Math.max(0, 1 - (t - 41.7) / 0.25) * Math.sin(ramp(t, 41.7, 41.95) * Math.PI);
+      return { open, letter: 0, sealDrop: drop, sealVis: t < 41.4 ? 0 : 1, squash: sq, glow: open * 0.9 + 0.18 };
     } },
 ];
 
@@ -108,28 +132,46 @@ const Titles2: React.FC<{ t: number }> = ({ t }) => {
   );
 };
 
+/** the gold date title over the first seconds (film time) */
+const OpenTitle: React.FC<{ t: number }> = ({ t }) => {
+  const a = clamp01(Math.min((t - 0.1) / 0.4, (OPEN.s1 + 0.3 - t) / 0.4)), b = clamp01(Math.min((t - 0.5) / 0.5, (OPEN.s1 + 0.3 - t) / 0.4));
+  if (a <= 0) return null;
+  return (
+    <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: 250 }}>
+      <div style={{ ...GOLD, fontSize: 50, letterSpacing: 8, whiteSpace: "nowrap", opacity: a }}>FOUR YEARS AGO TODAY</div>
+      <div style={{ ...GOLD, fontSize: 38, letterSpacing: 8, marginTop: 22, opacity: b * 0.9 }}>NOVEMBER 30, 2022</div>
+    </AbsoluteFill>
+  );
+};
+
 export const ElianLetter2: React.FC = () => {
   LETTER.no = 2; LETTER.label = undefined;
-  const f = useCurrentFrame();
-  const t = f / FPS;
+  const fNew = useCurrentFrame();
+  const tNew = fNew / FPS;
+  const t = oldT(tNew);
+  const f = Math.round(t * FPS);
   const s = pickShot(SHOTS2, t);
+  const seqFrom = tNew < OPEN.s1 ? -Math.round(A_OFF * FPS) : Math.round(SHIFT * FPS);
   const cut = s.past && f - Math.round(s.a * FPS) < 2;
   const weave = s.past ? (cut ? -36 : Math.sin(f * 0.9) * 1.5 + Math.sin(f * 2.3) * 1) : 0;
-  const goldIn = Math.max(0.6 * ramp(t, 3.45, 3.7) * (1 - ramp(t, 3.7, 4.1)), ramp(t, 5.2, 5.6) * (1 - ramp(t, 5.6, 6.1)), (1 - ramp(t, 33.2, 34.0)) * (t >= 33.2 ? 1 : 0), 0.6 * ramp(t, 37.35, 37.6) * (1 - ramp(t, 37.6, 38.0)));
+  const goldIn = Math.max(0.6 * ramp(t, 3.45, 3.7) * (1 - ramp(t, 3.7, 4.1)), ramp(t, 5.2, 5.6) * (1 - ramp(t, 5.6, 6.1)), (1 - ramp(t, 33.2, 34.0)) * (t >= 33.2 ? 1 : 0), 0.6 * ramp(t, 37.35, 37.6) * (1 - ramp(t, 37.6, 38.0)), 0.5 * ramp(t, 40.8, 41.0) * (1 - ramp(t, 41.0, 41.4)));
   const burn = ramp(t, 15.6, 15.8) * (1 - ramp(t, 15.8, 16.15));
   const dark = ramp(t, 32.7, 33.15) * (t < 33.2 ? 1 : 0);
   return (
     <AbsoluteFill style={{ background: "#000" }}>
       <AbsoluteFill style={{ transform: `translateY(${weave}px)` }}>
-        <ThreeCanvas width={1080} height={1920} shadows gl={{ antialias: false, stencil: false, toneMappingExposure: 1.0 }} camera={{ fov: 40, near: 0.05, far: 2000 }}>
-          <Inner shots={SHOTS2} />
-        </ThreeCanvas>
+        <Sequence from={seqFrom} key={seqFrom} layout="none">
+          <ThreeCanvas width={1080} height={1920} shadows gl={{ antialias: false, stencil: false, toneMappingExposure: 1.0 }} camera={{ fov: 40, near: 0.05, far: 2000 }}>
+            <Inner shots={SHOTS2} />
+          </ThreeCanvas>
+        </Sequence>
       </AbsoluteFill>
       {s.past && <ArchivePrint f={f} />}
       {dark > 0 && <AbsoluteFill style={{ background: "#000", opacity: dark }} />}
       {burn > 0 && <AbsoluteFill style={{ background: "radial-gradient(circle at 60% 40%, #fff1c8 0%, #ff9a3a 45%, #5a1a00 100%)", opacity: burn * 0.9, mixBlendMode: "screen" }} />}
       {goldIn > 0 && <AbsoluteFill style={{ background: "radial-gradient(circle at 50% 45%, #fffaf0 0%, #ffd890 50%, #c88a30 100%)", opacity: goldIn * 0.95 }} />}
-      <CaptionLayer t={t} caps={CAPS} />
+      <CaptionLayer t={tNew} caps={CAPS} />
+      <OpenTitle t={tNew} />
       <Titles2 t={t} />
     </AbsoluteFill>
   );

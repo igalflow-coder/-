@@ -6,8 +6,9 @@
 import fs from "node:fs";
 
 const [voicePath = "-", outPath = "audio/letter2_mix.wav"] = process.argv.slice(2);
-const SR = 48000, DUR = 48.0, N = Math.floor(SR * DUR), TAU = 2 * Math.PI;
-const L = new Float64Array(N), R = new Float64Array(N);
+const SR = 48000, DUR = 48.0, TAU = 2 * Math.PI;
+let N = Math.floor(SR * DUR);
+let L = new Float64Array(N), R = new Float64Array(N);
 let seed = 12345;
 const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
@@ -133,6 +134,23 @@ put(paper(0.7, 0.2), 37.7, 1, -0.1);
 put(thud(0.7), 38.3, 1, 0);
 put(pad([38, 50, 57, 62, 66], 9.4, 0.06, 0.3, 2.4), 38.4);            // D major
 [74, 78, 81, 86].forEach((m, i) => put(musicBox(m, 3, 0.14), 41.2 + i * 0.5, 1, -0.2 + i * 0.13));
+
+// ---------------------------------------------------------------- version 2: re-time the score to the new opening
+// L2V2="at,dur,s1" (film seconds of the new opening, as in Letter2.tsx OPEN): the score is laid out in old film time and
+// read through the same time map as the picture (oldT), with a 30 ms crossfade at the one jump.
+if (process.env.L2V2) {
+  const [at, dur, s1] = process.env.L2V2.split(",").map(Number);
+  const T0 = 15.4, LNEW = Math.round((at + dur + 0.45) * 30) / 30, SHIFT = LNEW - T0, A = 11.6 - s1;
+  const N2 = Math.floor(SR * (DUR + SHIFT)), L2 = new Float64Array(N2), R2 = new Float64Array(N2);
+  const xf = Math.floor(0.03 * SR), b = Math.floor(s1 * SR), get = (X, k) => (k >= 0 && k < N ? X[k] : 0);
+  for (let i = 0; i < N2; i++) {
+    const t = i / SR, k = Math.floor((t < s1 ? t + A : t - SHIFT) * SR);
+    let l = get(L, k), r = get(R, k);
+    if (i >= b - xf && i < b) { const k2 = Math.floor((t - SHIFT) * SR), w = (i - (b - xf)) / xf; l = l * (1 - w) + get(L, k2) * w; r = r * (1 - w) + get(R, k2) * w; }
+    L2[i] = l; R2[i] = r;
+  }
+  L = L2; R = R2; N = N2;
+}
 
 // ---------------------------------------------------------------- duck under the voice, mix, write
 let voice = null;
