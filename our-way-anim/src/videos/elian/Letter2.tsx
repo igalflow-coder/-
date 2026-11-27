@@ -18,7 +18,7 @@ export const FPS = 30;
 export const OLD_DUR = 48;
 export const VOICE_AT = 0.3;
 /** the new opening: when it starts, how long it is, and where its first sentence ends (film time, from the recording) */
-export const OPEN = { at: 0.7, dur: 5.5, s1: 3.3 };
+export const OPEN = { at: 0.7, dur: 5.5, s1: 4.3 };
 /** old film time where the kept part begins (just before "So I tell them", the J-cut into the 2020s) */
 export const T0 = 15.4;
 export const LNEW = Math.round((OPEN.at + OPEN.dur + 0.45) * FPS) / FPS;

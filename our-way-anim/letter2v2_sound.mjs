@@ -5,7 +5,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-const OPEN = { at: 0.7, dur: 5.5, s1: 3.3 };
+const OPEN = { at: 0.7, dur: 5.5, s1: 4.3 };
 const LNEW = Math.round((OPEN.at + OPEN.dur + 0.45) * 30) / 30;
 const [video, out] = process.argv.slice(2);
 const bin = path.resolve("node_modules/@remotion/compositor-win32-x64-msvc");
