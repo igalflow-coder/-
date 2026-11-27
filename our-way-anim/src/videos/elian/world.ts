@@ -472,7 +472,7 @@ export class World {
     (this.mirrorHalo.material as THREE.MeshBasicMaterial).opacity = st.halo ?? 0.25;
     this.mirrorHalo.lookAt(cam.position);
     this.museumHalo.lookAt(cam.position);
-    this.kids.forEach((k, i) => setMap(k.card, this.kidTex[i][st.hands ? 1 : 0]));
+    this.kids.forEach((k, i) => { setMap(k.card, this.kidTex[i][st.hands ? 1 : 0]); k.card.visible = !st.noKids; if (k.blob) k.blob.visible = !st.noKids; });
     // typing: one key down at a time, the hands bob in turn
     this.keys.set(st.key ?? -1);
     // page: handwriting so far, the pen follows the line being written (or rests beside the sheet)
